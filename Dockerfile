@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 FROM ubuntu:22.04 as base
 
 ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=Europe/Amsterdam
+ENV TZ=America/New_York
 
 WORKDIR /usr/src/app
 
