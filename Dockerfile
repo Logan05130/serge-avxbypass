@@ -1,4 +1,3 @@
-  GNU nano 6.2                                                  Dockerfile                                                            
 # Base image for node
 FROM node:19 as node_base
 
@@ -19,7 +18,8 @@ COPY --chmod=0755 scripts/compile.sh .
 RUN apt update && \
     apt install -y curl wget gnupg python3-pip git && \
     wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add - && \
-    echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | tee /etc/apt/sources.list.>    wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.17_amd64.deb && \
+    echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list && \
+    wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.17_amd64.deb && \
     dpkg -i libssl1.1_1.1.1f-1ubuntu2.17_amd64.deb && \
     apt-get update && \
     apt-get install -y mongodb-org && \
@@ -47,3 +47,18 @@ RUN npm ci
 
 COPY ./web /usr/src/app/web/
 WORKDIR /usr/src/app/web/
+RUN npm run build
+
+# Runtime environment
+FROM base as release
+
+ENV NODE_ENV='production'
+WORKDIR /usr/src/app
+
+COPY --from=frontend_builder /usr/src/app/web/build /usr/src/app/api/static/
+COPY ./api /usr/src/app/api
+
+RUN pip install ./api
+
+COPY --chmod=0755 scripts/deploy.sh /usr/src/app/deploy.sh
+CMD ./deploy.sh
